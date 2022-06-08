@@ -1,13 +1,16 @@
 from __future__ import annotations
+
 from typing import Tuple
-from torch.nn.utils.rnn import pad_sequence
+
 import torch
+from torch.nn.utils.rnn import pad_sequence
+
 Tensor = torch.Tensor
 
 
-class BaseListDataset():
-    """Base class for loading list data
-    """
+class BaseListDataset:
+    """Base class for loading list data"""
+
     def __init__(self, data: list):
         self.data = data
         self.dataset = []
@@ -30,12 +33,28 @@ class EEGListDataset(BaseListDataset):
     Args:
         BaseListDataset (_type_): base class for list data
     """
+
     def process_data(self) -> None:
         for record in self.data:
-            x = torch.tensor([record[0], record[1], record[2], record[3],
-                             record[4], record[5], record[6], record[7],
-                             record[8], record[9], record[10], record[11],
-                             record[12], record[13]], dtype=float)
+            x = torch.tensor(
+                [
+                    record[0],
+                    record[1],
+                    record[2],
+                    record[3],
+                    record[4],
+                    record[5],
+                    record[6],
+                    record[7],
+                    record[8],
+                    record[9],
+                    record[10],
+                    record[11],
+                    record[12],
+                    record[13],
+                ],
+                dtype=float,
+            )
             y = torch.tensor(int(record[14]))
             self.dataset.append((x, y))
 

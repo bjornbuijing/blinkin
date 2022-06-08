@@ -62,11 +62,14 @@ class BaseDataIterator:
             raise StopIteration
 
 
-class SwitchIterator:
-    def __init__(self, dataset: BaseListDataset):
+class EEGChunkIterator:
+    def __init__(self, dataset: BaseListDataset, batchsize: int, horizon: int):
         self.dataset = dataset
+        self.batchsize = batchsize
+        self.horizon = horizon
         self.curindex = 0
         self.index = 0
+        #  Load everything into chunks
 
     def __len__(self) -> int:
         # the lenght is the amount of batches
@@ -74,7 +77,6 @@ class SwitchIterator:
 
     def __iter__(self) -> BaseDataIterator:
         # initialize index
-
         return self
 
     def batchloop(self) -> Tuple[Tensor, Tensor]:
@@ -82,42 +84,38 @@ class SwitchIterator:
         Y = []  # noqa N806
         # fill the batch
         x, y = self.dataset[int(self.index)]
-        X.append(x)
-        Y.append(y)
+        count = 1
+        batchlist = []
         self.index = self.index + 1
-        currentY = y
-        while y == currentY:
-            if self.index + 1 < len(self.dataset):
-                X.append(x)
-                Y.append(y)
-                self.index = self.index + 1
-                x, y = self.dataset[int(self.index)]
-            else:
-                self.index = 0
+        currenty = y
+        while y == currenty and count <= self.batchsize:
+            if self.index == self.__len__:
                 break
+            else:
+                # We need too chunk here
+                horizoncount = 0
+                horizonlist = []
+                while horizoncount < self.horizon:
+                    x, y = self.dataset[int(self.index) + horizoncount]
+                    if y == currenty:
+                        horizonlist.append(x) # noqa E506
+                        horizoncount = horizoncount + 1
+                    else:
+                        break
+            batchlist.append(pad_sequence(horizonlist, batch_first=True, padding_value=0)) # noqa E506
+            count = count + 1
+            self.index = self.index + 1
+            x, y = self.dataset[int(self.index)]
 
-        return X, Y
+        # we need to add padding
+        # return X, Y
+        return batchlist
 
     def __next__(self) -> Tuple[Tensor, Tensor]:
-        if self.index < (len(self.dataset)):
-            X, Y = self.batchloop()
-            return X, Y
-        else:
-            raise StopIteration
-
-
-class SwitchPaddedDatagenerator(SwitchIterator):
-    # again, we inherit everything from the baseclass
-    def __init__(self, dataset: BaseListDataset) -> None:
-        # we initialize the super class BaseDataIterator
-        # we now have everything the BaseDataIterator can do, for free
-        super().__init__(dataset)
-
-    def __next__(self) -> Tuple[Tensor, Tensor]:
-        if self.index < (len(self.dataset)):
-            X, Y = self.batchloop()
+        if self.index <= (len(self.dataset)):
+            X = self.batchloop()  # noqa N806
             # we just want to add padding
             X_ = pad_sequence(X, batch_first=True, padding_value=0)  # noqa N806
-            return X_, torch.tensor(Y)
+            return X_
         else:
             raise StopIteration
