@@ -98,11 +98,13 @@ class EEGChunkIterator:
                 while horizoncount < self.horizon:
                     x, y = self.dataset[int(self.index) + horizoncount]
                     if y == currenty:
-                        horizonlist.append(x) # noqa E506
+                        horizonlist.append(x)  # noqa E506
                         horizoncount = horizoncount + 1
                     else:
                         break
-            batchlist.append(pad_sequence(horizonlist, batch_first=True, padding_value=0)) # noqa E506
+            batchlist.append(
+                pad_sequence(horizonlist, batch_first=True, padding_value=0)
+            )  # noqa E506
             count = count + 1
             self.index = self.index + 1
             x, y = self.dataset[int(self.index)]

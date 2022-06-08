@@ -10,7 +10,7 @@ help:
 	@echo "       print this help message"
 
 lint:
-	poetry run flake8 src
+	poetry run flake8 src --ignore=ANN101,N806
 	poetry run mypy --no-strict-optional --warn-unreachable --show-error-codes --ignore-missing-imports src
 	poetry run mypy --no-strict-optional --warn-unreachable --show-error-codes --ignore-missing-imports hypertune.py
 

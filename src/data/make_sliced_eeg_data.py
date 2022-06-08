@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 from typing import Tuple
-
 import torch
 from torch.utils.data import Dataset
 
@@ -9,16 +7,17 @@ Tensor = torch.Tensor
 
 
 class BaseListSlicedDataset(Dataset):
-    """Base class for loading list data"""
-
-    def __init__(self, data: list, horizon: int):
+    """Base class for loading list data
+    """
+    def __init__(self: BaseListSlicedDataset, data: list,
+                 horizon: int) -> None:
         self.data = data
         self.dataset = torch.tensor
         self.horizon = horizon
         self.process_data()
         self.size = len(self.dataset)
 
-    def process_data(self) -> None:
+    def process_data(self: BaseListSlicedDataset) -> None:
         newlist = []
         for record in self.data:
             newlist.append(
