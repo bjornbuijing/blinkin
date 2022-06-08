@@ -94,48 +94,22 @@ class EEGBufferIterator:
         # initialize index
         return self
 
-    def batchloop2(self, id: int) -> Tuple[Tensor, Tensor]:
-        X = []  # noqa N806
-        Y = []  # noqa N806
-        # fill the batch
-        x, y = self.dataset[int(self.index)]
-        count = 1
-        batchlist = []
-        self.index = self.index + 1
-        currenty = y
-        while y == currenty and count <= self.batchsize:
-            if self.index == self.__len__:
-                break
-            else:
-                # We need too chunk here
-                horizoncount = 0
-                horizonlist = []
-                while horizoncount < self.horizon:
-                    x, y = self.dataset[int(self.index) + horizoncount]
-                    if y == currenty:
-                        horizonlist.append(x) # noqa E506
-                        horizoncount = horizoncount + 1
-                    else:
-                        break
-            batchlist.append(pad_sequence(horizonlist, batch_first=True, padding_value=0)) # noqa E506
-            count = count + 1
-            self.index = self.index + 1
-            x, y = self.dataset[int(self.index)]
-
     def batchloop(self, id: int) -> Tuple[Tensor, Tensor]:
-        randlist = self.dataset[id]
+        randlist = self.sortedlist[id]
+        print(len(randlist))
         batchlist = []
         for i in range(0, self.batchsize):
             horizonlist = []
             for j in range(0, self.horizon):
                 if (i + j) < len(randlist):
-                    x = randlist[i + j]
+                    x, y = randlist[i + j]
                     horizonlist.append(x)
                 else:
                     break
+            print(len(horizonlist))
             batchlist.append(pad_sequence(horizonlist, batch_first=True, padding_value=0)) # noqa E506          
 
-        return batchlist
+        return pad_sequence(batchlist, batch_first=True, padding_value=0)
 
     def __next__(self) -> Tuple[Tensor, Tensor]:
         i = random.randint(0, len(self.sortedlist))
