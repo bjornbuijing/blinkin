@@ -96,7 +96,6 @@ class EEGBufferIterator:
 
     def batchloop(self: EEGBufferIterator, id: int) -> Tuple[Tensor, Tensor]:
         randlist = self.sortedlist[id]
-        print(len(randlist))
         batchlist = []
         for i in range(0, self.batchsize):
             horizonlist = []
