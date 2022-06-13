@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, List, Any
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
@@ -11,9 +11,9 @@ Tensor = torch.Tensor
 class BaseListDataset:
     """Base class for loading list data"""
 
-    def __init__(self, data: list):
+    def __init__(self, data: list) -> None:
         self.data = data
-        self.dataset = []
+        self.dataset = []  # type: List[Tuple]
         self.process_data()
 
     def process_data(self) -> None:
@@ -23,12 +23,14 @@ class BaseListDataset:
     def __len__(self) -> int:
         return len(self.dataset)
 
-    def __getitem__(self, idx: int) -> Tuple[Tensor, int]:
+    def __getitem__(self, idx: int) -> Tuple[Any, ...]:
         return self.dataset[idx]
 
 
 class BaseDataIterator:
-    def __init__(self, dataset: BaseListDataset, batchsize: int):
+    def __init__(
+        self, dataset: BaseListDataset, batchsize: int
+    ) -> None:  # noqa E501
         self.dataset = dataset
         self.batchsize = batchsize
         self.curindex = 0
@@ -43,7 +45,7 @@ class BaseDataIterator:
         self.index_list = torch.randperm(len(self.dataset))
         return self
 
-    def batchloop(self) -> Tuple[Tensor, Tensor]:
+    def batchloop(self) -> Tuple[List[Tensor], List[int]]:
         X = []  # noqa N806
         Y = []  # noqa N806
         # fill the batch
@@ -54,7 +56,7 @@ class BaseDataIterator:
             self.index += 1
         return X, Y
 
-    def __next__(self) -> Tuple[Tensor, Tensor]:
+    def __next__(self) -> Tuple[List[Tensor], List[int]]:
         if self.index <= (len(self.dataset) - self.batchsize):
             X, Y = self.batchloop()
             return X, Y
@@ -63,7 +65,9 @@ class BaseDataIterator:
 
 
 class EEGChunkIterator:
-    def __init__(self, dataset: BaseListDataset, batchsize: int, horizon: int):
+    def __init__(
+        self, dataset: BaseListDataset, batchsize: int, horizon: int
+    ) -> None:  # noqa E501
         self.dataset = dataset
         self.batchsize = batchsize
         self.horizon = horizon
@@ -75,11 +79,11 @@ class EEGChunkIterator:
         # the lenght is the amount of batches
         return int(len(self.dataset) / self.batchsize)
 
-    def __iter__(self) -> BaseDataIterator:
+    def __iter__(self) -> EEGChunkIterator:
         # initialize index
         return self
 
-    def batchloop(self) -> Tuple[Tensor, Tensor]:
+    def batchloop(self) -> List[Tensor]:
         X = []  # noqa N806
         Y = []  # noqa N806
         # fill the batch
@@ -113,7 +117,7 @@ class EEGChunkIterator:
         # return X, Y
         return batchlist
 
-    def __next__(self) -> Tuple[Tensor, Tensor]:
+    def __next__(self) -> Tensor:
         if self.index <= (len(self.dataset)):
             X = self.batchloop()  # noqa N806
             # we just want to add padding

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import random
-from typing import Tuple
+from typing import Tuple, List
+
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
@@ -10,9 +11,9 @@ Tensor = torch.Tensor
 class BaseListDataset:
     """Base class for loading list data"""
 
-    def __init__(self: BaseListDataset, data: list):
+    def __init__(self: BaseListDataset, data: list) -> None:
         self.data = data
-        self.dataset = []
+        self.dataset = []   # type: List[Tuple]
         self.process_data()
 
     def process_data(self: BaseListDataset) -> None:
@@ -27,7 +28,9 @@ class BaseListDataset:
 
 
 class BaseDataIterator:
-    def __init__(self: BaseDataIterator, dataset: BaseListDataset, batchsize: int):
+    def __init__(
+        self: BaseDataIterator, dataset: BaseListDataset, batchsize: int
+    ):  # noqa E501
         self.dataset = dataset
         self.batchsize = batchsize
         self.curindex = 0
@@ -42,7 +45,7 @@ class BaseDataIterator:
         self.index_list = torch.randperm(len(self.dataset))
         return self
 
-    def batchloop(self: BaseDataIterator) -> Tuple[Tensor, Tensor]:
+    def batchloop(self: BaseDataIterator) -> Tuple[List[Tensor], List[int]]:
         X = []  # noqa N806
         Y = []  # noqa N806
         # fill the batch
@@ -53,7 +56,7 @@ class BaseDataIterator:
             self.index += 1
         return X, Y
 
-    def __next__(self: BaseDataIterator) -> Tuple[Tensor, Tensor]:
+    def __next__(self: BaseDataIterator) -> Tuple[List[Tensor], List[int]]:
         if self.index <= (len(self.dataset) - self.batchsize):
             X, Y = self.batchloop()
             return X, Y
@@ -62,14 +65,15 @@ class BaseDataIterator:
 
 
 class EEGBufferIterator:
-    def __init__(self: EEGBufferIterator, dataset: BaseListDataset,
-                 batchsize: int, horizon: int) -> EEGBufferIterator:
+    def __init__(
+        self: EEGBufferIterator, dataset: BaseListDataset, batchsize: int, horizon: int # noqa E501
+    ) -> None:
         self.dataset = dataset
         self.batchsize = batchsize
         self.horizon = horizon
         self.curindex = 0
         self.index = 0
-        self.sortedlist = []
+        self.sortedlist = []   # type: List[Tuple]
         self.processdata()
 
     def processdata(self: EEGBufferIterator) -> None:
@@ -90,11 +94,11 @@ class EEGBufferIterator:
         # the lenght is the amount of batches
         return int(len(self.dataset) / self.batchsize)
 
-    def __iter__(self: EEGBufferIterator) -> BaseDataIterator:
+    def __iter__(self: EEGBufferIterator) -> EEGBufferIterator:
         # initialize index
         return self
 
-    def batchloop(self: EEGBufferIterator, id: int) -> Tuple[Tensor, Tensor]:
+    def batchloop(self: EEGBufferIterator, id: int) -> Tensor:
         randlist = self.sortedlist[id]
         batchlist = []
         for i in range(0, self.batchsize):
@@ -112,6 +116,6 @@ class EEGBufferIterator:
 
         return pad_sequence(batchlist, batch_first=True, padding_value=0)
 
-    def __next__(self: EEGBufferIterator) -> Tuple[Tensor, Tensor]:
+    def __next__(self: EEGBufferIterator) -> Tensor:
         i = random.randint(0, len(self.sortedlist))
         return self.batchloop(i)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, List, Any
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
@@ -13,7 +13,7 @@ class BaseListDataset:
 
     def __init__(self, data: list):
         self.data = data
-        self.dataset = []
+        self.dataset = []  # type: List[Tuple]
         self.process_data()
 
     def process_data(self) -> None:
@@ -23,7 +23,7 @@ class BaseListDataset:
     def __len__(self) -> int:
         return len(self.dataset)
 
-    def __getitem__(self, idx: int) -> Tuple[Tensor, int]:
+    def __getitem__(self, idx: int) -> Tuple[Any, ...]:
         return self.dataset[idx]
 
 
@@ -43,7 +43,7 @@ class BaseDataIterator:
         self.index_list = torch.randperm(len(self.dataset))
         return self
 
-    def batchloop(self) -> Tuple[Tensor, Tensor]:
+    def batchloop(self) -> Tuple[List[Tensor], List[int]]:
         X = []  # noqa N806
         Y = []  # noqa N806
         # fill the batch
@@ -70,14 +70,14 @@ class SwitchIterator:
 
     def __len__(self) -> int:
         # the lenght is the amount of batches
-        return int(len(self.dataset) / self.batchsize)
+        return int(len(self.dataset))
 
-    def __iter__(self) -> BaseDataIterator:
+    def __iter__(self) -> SwitchIterator:
         # initialize index
 
         return self
 
-    def batchloop(self) -> Tuple[Tensor, Tensor]:
+    def batchloop(self) -> Tuple[List[Tensor], List[int]]:
         X = []  # noqa N806
         Y = []  # noqa N806
         # fill the batch
@@ -98,7 +98,7 @@ class SwitchIterator:
 
         return X, Y
 
-    def __next__(self) -> Tuple[Tensor, Tensor]:
+    def __next__(self) -> Tuple[List[Tensor], List[int]]:
         if self.index < (len(self.dataset)):
             X, Y = self.batchloop()
             return X, Y

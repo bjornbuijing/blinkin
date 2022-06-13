@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, List
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
@@ -13,7 +13,7 @@ class BaseListDataset:
 
     def __init__(self, data: list):
         self.data = data
-        self.dataset = []
+        self.dataset = []   # type: List[Tuple]
         self.process_data()
 
     def process_data(self) -> None:

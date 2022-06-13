@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, List, Any
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
@@ -13,7 +13,7 @@ class BaseListDataset:
 
     def __init__(self, data: list):
         self.data = data
-        self.dataset = []
+        self.dataset = []  # type: List[Tuple]
         self.process_data()
 
     def process_data(self) -> None:
@@ -29,7 +29,7 @@ class BaseListDataset:
 
 class BaseDataIterator:
     def __init__(self, dataset: BaseListDataset, batchsize: int):
-        self.dataset = dataset
+        self.dataset = dataset  # type: List[Tuple]
         self.batchsize = batchsize
         self.curindex = 0
 
@@ -64,7 +64,7 @@ class BaseDataIterator:
 
 class EEGBatchIterator:
     def __init__(self, dataset: BaseListDataset, batchsize: int):
-        self.dataset = dataset
+        self.dataset = dataset  # type: List[Tuple]
         self.batchsize = batchsize
         self.curindex = 0
         self.index = 0
@@ -73,11 +73,11 @@ class EEGBatchIterator:
         # the lenght is the amount of batches
         return int(len(self.dataset) / self.batchsize)
 
-    def __iter__(self) -> BaseDataIterator:
+    def __iter__(self) -> EEGBatchIterator:
         # initialize index
         return self
 
-    def batchloop(self) -> Tuple[Tensor, Tensor]:
+    def batchloop(self) -> Tuple[List[Any], List[Any]]:
         X = []  # noqa N806
         Y = []  # noqa N806
         # fill the batch

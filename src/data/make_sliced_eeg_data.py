@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Tuple
+
+from typing import Tuple, List, Any
+
 import torch
 from torch.utils.data import Dataset
 
@@ -7,10 +9,9 @@ Tensor = torch.Tensor
 
 
 class BaseListSlicedDataset(Dataset):
-    """Base class for loading list data
-    """
-    def __init__(self: BaseListSlicedDataset, data: list,
-                 horizon: int) -> None:
+    """Base class for loading list data"""
+
+    def __init__(self: BaseListSlicedDataset, data: list, horizon: int) -> None: # noqa E501
         self.data = data
         self.dataset = torch.tensor
         self.horizon = horizon
@@ -53,8 +54,8 @@ class BaseListSlicedDataset(Dataset):
         # squeeze will remove dimension -1 if possible.
         # y = self.dataset[-self.horizon:, :].squeeze(-1)
         i = 0
-        x = []
-        y = []
+        x = []  # type: List[Any]
+        y = []  # type: List[Any]
         while i < self.horizon and idx + i < self.size:
             x.append(
                 [

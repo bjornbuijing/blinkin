@@ -41,14 +41,14 @@ def get_eeg_data(cache_dir: str = ".") -> Tuple[List[Path], List[Path]]:
 
 
 class EegDataset(Dataset):
-    def __init__(self, data):
+    def __init__(self, data):  # noqa ANN101
         self.data = data
         self.size = len(data)
 
-    def __len__(self):
+    def __len__(self):  # noqa ANN101
         return self.size
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):  # noqa ANN101
         # get a single item
         item = self.data[idx]
         x = [
@@ -76,7 +76,7 @@ class EegDataset(Dataset):
 
 
 class EegDatasetWindowed(Dataset):
-    def __init__(self, data, windowsize: int):
+    def __init__(self, data: list, windowsize: int):
         self.data = data
         self.size = len(data)
         self.window = windowsize
@@ -84,12 +84,12 @@ class EegDatasetWindowed(Dataset):
     def __len__(self):
         return self.size - self.window
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         # get a single item
-        item = self.data[idx : idx + self.window]
+        item = self.data[idx: idx + self.window]
         x = item[: -self.window, :]
         # squeeze will remove dimension -1 if possible. #NOQA E501
-        y = item[-self.window :, :].squeeze(-1)
+        y = item[-self.window:, :].squeeze(-1)
 
         return x, y
 
@@ -98,7 +98,7 @@ class BaseDataset:
     def __init__(self, paths: List[Path]) -> None:
         self.paths = paths
         random.shuffle(self.paths)
-        self.dataset = []
+        self.dataset = []  # type: List[Tuple]
         self.process_data()
 
     def process_data(self) -> None:
