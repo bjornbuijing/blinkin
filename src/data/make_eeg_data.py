@@ -75,7 +75,7 @@ class BaseDataIterator:
         self.index_list = torch.randperm(len(self.dataset))
         return self
 
-    def batchloop(self) -> Tuple[Tensor, Tensor]:
+    def batchloop(self) -> Tuple[List[Tensor], List[Tensor]]:
         X = []  # noqa N806
         Y = []  # noqa N806
         # fill the batch
