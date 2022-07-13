@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, List
+from typing import Tuple, List, Any
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
@@ -13,7 +13,7 @@ class BaseListDataset:
 
     def __init__(self, data: list):
         self.data = data
-        self.dataset = []   # type: List[Tuple]
+        self.dataset = []  # type: List[Tuple]
         self.process_data()
 
     def process_data(self) -> None:
@@ -23,45 +23,13 @@ class BaseListDataset:
     def __len__(self) -> int:
         return len(self.dataset)
 
-    def __getitem__(self, idx: int) -> Tuple[Tensor, Tensor]:
+    def __getitem__(self, idx: int) -> Tuple[Tensor, int]:
         return self.dataset[idx]
-
-
-class EEGListDataset(BaseListDataset):
-    """Processes data for EEG Lists
-
-    Args:
-        BaseListDataset (_type_): base class for list data
-    """
-
-    def process_data(self) -> None:
-        for record in self.data:
-            x = torch.tensor(
-                [
-                    record[0],
-                    record[1],
-                    record[2],
-                    record[3],
-                    record[4],
-                    record[5],
-                    record[6],
-                    record[7],
-                    record[8],
-                    record[9],
-                    record[10],
-                    record[11],
-                    record[12],
-                    record[13],
-                ],
-                dtype=float,
-            )
-            y = torch.tensor(int(record[14]))
-            self.dataset.append((x, y))
 
 
 class BaseDataIterator:
     def __init__(self, dataset: BaseListDataset, batchsize: int):
-        self.dataset = dataset
+        self.dataset = dataset  # type: List[Tuple]
         self.batchsize = batchsize
         self.curindex = 0
 
@@ -75,7 +43,7 @@ class BaseDataIterator:
         self.index_list = torch.randperm(len(self.dataset))
         return self
 
-    def batchloop(self) -> Tuple[List[Tensor], List[Tensor]]:
+    def batchloop(self) -> Tuple[Tensor, Tensor]:
         X = []  # noqa N806
         Y = []  # noqa N806
         # fill the batch
@@ -94,19 +62,46 @@ class BaseDataIterator:
             raise StopIteration
 
 
-class PaddedDatagenerator(BaseDataIterator):
-    # again, we inherit everything from the baseclass
-    def __init__(self, dataset: BaseListDataset, batchsize: int) -> None:
-        # we initialize the super class BaseDataIterator
-        # we now have everything the BaseDataIterator can do, for free
-        super().__init__(dataset, batchsize)
+class EEGBatchIterator:
+    def __init__(self, dataset: BaseListDataset, batchsize: int):
+        self.dataset = dataset  # type: List[Tuple]
+        self.batchsize = batchsize
+        self.curindex = 0
+        self.index = 0
+
+    def __len__(self) -> int:
+        # the lenght is the amount of batches
+        return int(len(self.dataset) / self.batchsize)
+
+    def __iter__(self) -> EEGBatchIterator:
+        # initialize index
+        return self
+
+    def batchloop(self) -> Tuple[List[Any], List[Any]]:
+        X = []  # noqa N806
+        Y = []  # noqa N806
+        # fill the batch
+        x, y = self.dataset[int(self.index)]
+        count = 1
+        X.append(x)
+        Y.append(y)
+        self.index = self.index + 1
+        currenty = y
+        while y == currenty and count < self.batchsize:
+            if self.index == self.__len__:
+                break
+            else:
+                X.append(x)
+                Y.append(y)
+                count = count + 1
+                self.index = self.index + 1
+                x, y = self.dataset[int(self.index)]
+        return X, Y
 
     def __next__(self) -> Tuple[Tensor, Tensor]:
-        if self.index <= (len(self.dataset) - self.batchsize):
-            X, Y = self.batchloop()
-            # I do not have a clue why
-            # this function returns a tensor
-            # and torch.tensor(X) gives me an error
+        if self.index <= (len(self.dataset)):
+            X, Y = self.batchloop()  # noqa N806
+            # we just want to add padding
             X_ = pad_sequence(X, batch_first=True, padding_value=0)  # noqa N806
             return X_, torch.tensor(Y)
         else:
